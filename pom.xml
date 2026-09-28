@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.1.1</version>
+		<relativePath/>
+	</parent>
+
+	<groupId>com.Matheus</groupId>
+	<artifactId>DevFlow</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>DevFlow</name>
+	<description>Event-driven task management system</description>
+
+	<properties>
+		<java.version>25</java.version>
+		<mapstruct.version>1.6.3</mapstruct.version>
+	</properties>
+
+	<modules>
+		<module>task-service</module>
+		<module>notification-service</module>
+		<module>audit-service</module>
+	</modules>
+
+</project>
