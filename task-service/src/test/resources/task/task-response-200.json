@@ -1,0 +1,10 @@
+{
+  "id": 1,
+  "title": "Study Kafka",
+  "description": "Learn Kafka",
+  "status": "TODO",
+  "priority": "HIGH",
+  "dueDate": null,
+  "createdAt": null,
+  "updatedAt": null
+}
