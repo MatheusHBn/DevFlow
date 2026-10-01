@@ -1,0 +1,6 @@
+spring:
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
