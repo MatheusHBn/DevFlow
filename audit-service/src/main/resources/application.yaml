@@ -1,3 +1,33 @@
+server:
+  port: 8082
+
 spring:
   application:
     name: audit-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/audit_db
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  flyway:
+    enabled: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: audit-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
+      properties:
+        spring.json.value.default.type: com.Matheus.audit_service.messaging.event.TaskCreatedEvent
+        spring.json.use.type.headers: false
+
+
