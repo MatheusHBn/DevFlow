@@ -5,6 +5,8 @@ import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.dto.TaskResponse;
 import com.Matheus.task_service.mapper.TaskMapper;
+import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
+import com.Matheus.task_service.messaging.producer.TaskEventProducer;
 import com.Matheus.task_service.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,16 +20,22 @@ public class TaskService {
 
     private final TaskRepository repository;
     private final TaskMapper mapper;
+    private final TaskEventProducer eventProducer;
 
     public TaskResponse createTask(TaskRequest request){
         var task = mapper.toEntity(request);
+        var savedTask = repository.save(task);
 
-        task.setCreatedAt(LocalDateTime.now());
-        task.setUpdatedAt(LocalDateTime.now());
+        var event = new TaskCreatedEvent(
+                savedTask.getId(),
+                savedTask.getTitle(),
+                savedTask.getDescription(),
+                savedTask.getStatus(),
+                savedTask.getPriority());
 
-        var taskSaved = repository.save(task);
+        eventProducer.publishTaskCreated(event);
 
-        return mapper.toResponse(taskSaved);
+        return mapper.toResponse(savedTask);
     }
 
     public List<TaskResponse> findAllTasks(){

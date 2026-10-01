@@ -6,13 +6,13 @@ import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.mapper.TaskMapper;
+import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
+import com.Matheus.task_service.messaging.producer.TaskEventProducer;
 import com.Matheus.task_service.repository.TaskRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -35,6 +35,11 @@ class TaskServiceTest {
     @InjectMocks
     private TaskService service;
 
+    @Captor
+    private ArgumentCaptor<TaskCreatedEvent> eventCaptor;
+
+    @Mock
+    private TaskEventProducer eventProducer;
     private TaskUtils taskUtils;
 
     @BeforeEach
@@ -54,12 +59,18 @@ class TaskServiceTest {
         var result = service.createTask(request);
 
         assertNotNull(result);
-        assertEquals(1L, result.id());
-        assertEquals("Study Kafka", result.title());
-        assertEquals(StatusTask.TODO, result.status());
-        assertEquals(PriorityTask.MEDIUM, result.priority());
+        assertEquals(savedTask.getId(), result.id());
 
         verify(repository).save(any(Task.class));
+        verify(eventProducer).publishTaskCreated(eventCaptor.capture());
+
+        TaskCreatedEvent capturedEvent = eventCaptor.getValue();
+
+        assertEquals(savedTask.getId(), capturedEvent.taskId());
+        assertEquals(savedTask.getTitle(), capturedEvent.title());
+        assertEquals(savedTask.getStatus(), capturedEvent.status());
+        assertEquals(savedTask.getPriority(), capturedEvent.priority());
+        assertEquals(savedTask.getDescription(), capturedEvent.description());
     }
 
 
