@@ -3,6 +3,7 @@ package com.Matheus.task_service.messaging.producer;
 import com.Matheus.task_service.domain.PriorityTask;
 import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
+import com.Matheus.task_service.messaging.event.TaskStatusChangedEvent;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +18,7 @@ import static org.mockito.Mockito.verify;
 class TaskEventProducerTest {
 
     @Mock
-    private KafkaTemplate<String, TaskCreatedEvent> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @InjectMocks
     private TaskEventProducer producer;
@@ -36,5 +37,19 @@ class TaskEventProducerTest {
         producer.publishTaskCreated(event);
 
         verify(kafkaTemplate).send("task-created", event);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("Should publish task status changed event to the correct topic")
+    void publishTaskStatusChanged_SendsEventToCorrectTopic() {
+        var event = new TaskStatusChangedEvent(
+                1L,
+                "TODO",
+                "DONE");
+
+        producer.publishTaskStatusChanged(event);
+
+        verify(kafkaTemplate).send("task-status-changed", event);
     }
 }

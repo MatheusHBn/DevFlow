@@ -7,6 +7,7 @@ import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.mapper.TaskMapper;
 import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
+import com.Matheus.task_service.messaging.event.TaskStatusChangedEvent;
 import com.Matheus.task_service.messaging.producer.TaskEventProducer;
 import com.Matheus.task_service.repository.TaskRepository;
 import org.junit.jupiter.api.*;
@@ -231,5 +232,34 @@ class TaskServiceTest {
 
         verify(repository).findById(999L);
         verify(repository, never()).delete(any());
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("Should publish event when task status is changed")
+    void updateTaskStatus_PublishesEvent_WhenStatusIsChanged() {
+
+        var task = Task.builder()
+                .id(1L)
+                .title("Study Kafka")
+                .description("Learn Kafka")
+                .status(StatusTask.TODO)
+                .priority(PriorityTask.HIGH)
+                .build();
+
+        when(repository.findById(1L)).thenReturn(Optional.of(task));
+        when(repository.save(any(Task.class))).thenReturn(task);
+
+        service.updateTaskStatus(1L, StatusTask.DONE);
+
+        var eventCaptor = ArgumentCaptor.forClass(TaskStatusChangedEvent.class);
+
+        verify(eventProducer).publishTaskStatusChanged(eventCaptor.capture());
+
+        var event = eventCaptor.getValue();
+
+        assertEquals(1L, event.taskId());
+        assertEquals("TODO", event.previousStatus());
+        assertEquals("DONE", event.newStatus());
     }
 }

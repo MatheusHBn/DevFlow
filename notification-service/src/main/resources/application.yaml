@@ -25,6 +25,10 @@ spring:
       group-id: notification-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
       properties:
-        spring.json.value.default.type: com.Matheus.notification_service.messaging.event.TaskCreatedEvent
-        spring.json.use.type.headers: false
+        spring.json.use.type.headers: true
+        spring.json.type.mapping: "com.Matheus.task_service.messaging.event.TaskCreatedEvent:com.Matheus.notification_service.messaging.event.TaskCreatedEvent,com.Matheus.task_service.messaging.event.TaskStatusChangedEvent:com.Matheus.notification_service.messaging.event.TaskStatusChangedEvent"
+
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer

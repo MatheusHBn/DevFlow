@@ -6,6 +6,7 @@ import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.dto.TaskResponse;
 import com.Matheus.task_service.mapper.TaskMapper;
 import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
+import com.Matheus.task_service.messaging.event.TaskStatusChangedEvent;
 import com.Matheus.task_service.messaging.producer.TaskEventProducer;
 import com.Matheus.task_service.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class TaskService {
         mapper.updateEntity(request, task);
 
         task.setUpdatedAt(LocalDateTime.now());
+
         var updatedTask = repository.save(task);
 
         return mapper.toResponse(updatedTask);
@@ -61,10 +63,19 @@ public class TaskService {
     public TaskResponse updateTaskStatus(Long id, StatusTask status){
         var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
 
+        var previousStatus = task.getStatus();
+
         task.setStatus(status);
         task.setUpdatedAt(LocalDateTime.now());
 
         var updatedTask = repository.save(task);
+
+        var event = new TaskStatusChangedEvent(
+                updatedTask.getId(),
+                previousStatus.name(),
+                updatedTask.getStatus().name());
+
+        eventProducer.publishTaskStatusChanged(event);
 
         return mapper.toResponse(updatedTask);
     }
