@@ -1,8 +1,7 @@
 package com.Matheus.notification_service.service;
 
 import com.Matheus.notification_service.domain.Notification;
-import com.Matheus.notification_service.messaging.event.TaskCreatedEvent;
-import com.Matheus.notification_service.messaging.event.TaskStatusChangedEvent;
+import com.Matheus.notification_service.messaging.event.*;
 import com.Matheus.notification_service.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +31,43 @@ public class NotificationService {
                 .message("Task " + event.taskId()
                         + " changed status from " + event.previousStatus()
                         + " to " + event.newStatus() + ".")
+                .read(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        repository.save(notification);
+    }
+
+    public void createPriorityChangeNotification(TaskPriorityChangedEvent event) {
+        var notification = Notification.builder()
+                .taskId(event.taskId())
+                .message(
+                        "Task " + event.taskId()
+                                + " changed priority from " + event.previousPriority()
+                                + " to " + event.newPriority() + "."
+                )
+                .read(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        repository.save(notification);
+    }
+
+    public void createUpdateNotification(TaskUpdatedEvent event) {
+        var notification = Notification.builder()
+                .taskId(event.taskId())
+                .message("Task \"" + event.title() + "\" was updated.")
+                .read(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        repository.save(notification);
+    }
+
+    public void createDeleteNotification(TaskDeletedEvent event) {
+        var notification = Notification.builder()
+                .taskId(event.taskId())
+                .message("Task \"" + event.title() + "\" was deleted.")
                 .read(false)
                 .createdAt(LocalDateTime.now())
                 .build();

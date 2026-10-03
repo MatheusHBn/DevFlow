@@ -28,7 +28,7 @@ spring:
 
       properties:
         spring.json.use.type.headers: true
-        spring.json.type.mapping: "com.Matheus.task_service.messaging.event.TaskCreatedEvent:com.Matheus.notification_service.messaging.event.TaskCreatedEvent,com.Matheus.task_service.messaging.event.TaskStatusChangedEvent:com.Matheus.notification_service.messaging.event.TaskStatusChangedEvent"
+        spring.json.type.mapping: "com.Matheus.task_service.messaging.event.TaskCreatedEvent:com.Matheus.notification_service.messaging.event.TaskCreatedEvent,com.Matheus.task_service.messaging.event.TaskStatusChangedEvent:com.Matheus.notification_service.messaging.event.TaskStatusChangedEvent,com.Matheus.task_service.messaging.event.TaskPriorityChangedEvent:com.Matheus.notification_service.messaging.event.TaskPriorityChangedEvent,com.Matheus.task_service.messaging.event.TaskUpdatedEvent:com.Matheus.notification_service.messaging.event.TaskUpdatedEvent,com.Matheus.task_service.messaging.event.TaskDeletedEvent:com.Matheus.notification_service.messaging.event.TaskDeletedEvent"
 
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
