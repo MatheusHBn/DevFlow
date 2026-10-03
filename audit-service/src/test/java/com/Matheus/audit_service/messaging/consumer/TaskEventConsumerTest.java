@@ -22,17 +22,16 @@ class TaskEventConsumerTest {
 
     @Test
     @DisplayName("Should delegate the received event to the AuditService")
-    void consume_DelegatesToAuditService_WhenTaskCreatedEventIsReceived() {
+    void consumeTaskCreated_DelegatesToAuditService_WhenTaskCreatedEventIsReceived() {
 
         var event = new TaskCreatedEvent(
                 1L,
                 "Configurar banco de dados",
                 "Descrição da task",
                 "PENDING",
-                "HIGH"
-        );
+                "HIGH");
 
-        taskEventConsumer.consume(event);
+        taskEventConsumer.consumeTaskCreated(event);
 
         verify(service).createAuditLog(event);
     }

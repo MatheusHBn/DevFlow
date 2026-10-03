@@ -27,7 +27,5 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 
       properties:
-        spring.json.value.default.type: com.Matheus.audit_service.messaging.event.TaskCreatedEvent
-        spring.json.use.type.headers: false
-
-
+        spring.json.use.type.headers: true
+        spring.json.type.mapping: "com.Matheus.task_service.messaging.event.TaskCreatedEvent:com.Matheus.audit_service.messaging.event.TaskCreatedEvent,com.Matheus.task_service.messaging.event.TaskStatusChangedEvent:com.Matheus.audit_service.messaging.event.TaskStatusChangedEvent,com.Matheus.task_service.messaging.event.TaskPriorityChangedEvent:com.Matheus.audit_service.messaging.event.TaskPriorityChangedEvent,com.Matheus.task_service.messaging.event.TaskUpdatedEvent:com.Matheus.audit_service.messaging.event.TaskUpdatedEvent,com.Matheus.task_service.messaging.event.TaskDeletedEvent:com.Matheus.audit_service.messaging.event.TaskDeletedEvent"

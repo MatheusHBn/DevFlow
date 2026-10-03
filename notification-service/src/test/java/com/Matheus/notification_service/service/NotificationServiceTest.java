@@ -36,8 +36,7 @@ class NotificationServiceTest {
                 "Study Kafka",
                 "Learn producers and consumers",
                 "TODO",
-                "MEDIUM"
-        );
+                "MEDIUM");
 
         service.createNotification(event);
 
@@ -83,7 +82,6 @@ class NotificationServiceTest {
 
         service.createPriorityChangeNotification(event);
 
-        var captor = ArgumentCaptor.forClass(Notification.class);
         verify(repository).save(captor.capture());
 
         var notification = captor.getValue();
@@ -103,7 +101,6 @@ class NotificationServiceTest {
                 "Estudar Kafka Avançado");
 
         service.createUpdateNotification(event);
-
 
         verify(repository).save(captor.capture());
 
