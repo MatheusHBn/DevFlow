@@ -1,9 +1,11 @@
 package com.Matheus.task_service.api;
 
 import com.Matheus.task_service.commons.FileUtils;
+import com.Matheus.task_service.domain.PriorityTask;
 import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.dto.TaskResponse;
+import com.Matheus.task_service.dto.TaskUpdateRequest;
 import com.Matheus.task_service.service.TaskService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,14 +93,14 @@ class TaskControllerTest {
         var request = fileUtils.readResourceFile("task/task-request-200.json");
         var response = fileUtils.readResourceAsObject("task/task-response-updated-200.json", TaskResponse.class);
 
-        when(service.updateTask(eq(1L), any(TaskRequest.class))).thenReturn(response);
+        when(service.updateTask(eq(1L), any(TaskUpdateRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/v1/tasks/1").contentType(MediaType.APPLICATION_JSON).content(request))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Updated task"));
 
-        verify(service).updateTask(eq(1L), any(TaskRequest.class));
+        verify(service).updateTask(eq(1L), any(TaskUpdateRequest.class));
     }
 
 
@@ -138,5 +140,33 @@ class TaskControllerTest {
         mockMvc.perform(delete("/v1/tasks/1")).andExpect(status().isNoContent());
 
         verify(service).deleteTask(1L);
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("Should return 200 OK and updated task priority when successful")
+    void updateTaskPriority_returnsUpdatedTask_WhenSuccessful() throws Exception {
+        var response = fileUtils.readResourceAsObject(
+                "task/task-response-updated-200.json",
+                TaskResponse.class);
+
+        when(service.updateTaskPriority(1L, PriorityTask.ULTRA)).thenReturn(response);
+
+        mockMvc.perform(patch("/v1/tasks/1/priority").param("priority", "ULTRA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.priority").value("ULTRA"));
+
+        verify(service).updateTaskPriority(1L, PriorityTask.ULTRA);
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("Should return 400 Bad Request when task priority is invalid")
+    void updateTaskPriority_returnsBadRequest_WhenPriorityIsInvalid() throws Exception {
+
+        mockMvc.perform(patch("/v1/tasks/1/priority").param("priority", "INVALID"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
     }
 }

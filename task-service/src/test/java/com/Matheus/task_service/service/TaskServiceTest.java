@@ -5,9 +5,10 @@ import com.Matheus.task_service.domain.PriorityTask;
 import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
+import com.Matheus.task_service.dto.TaskResponse;
+import com.Matheus.task_service.dto.TaskUpdateRequest;
 import com.Matheus.task_service.mapper.TaskMapper;
-import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
-import com.Matheus.task_service.messaging.event.TaskStatusChangedEvent;
+import com.Matheus.task_service.messaging.event.*;
 import com.Matheus.task_service.messaging.producer.TaskEventProducer;
 import com.Matheus.task_service.repository.TaskRepository;
 import org.junit.jupiter.api.*;
@@ -144,7 +145,7 @@ class TaskServiceTest {
     @DisplayName("Should update task details when successful")
     void updateTask_UpdatesTaskDetails_WhenSuccessful() {
         var taskInDatabase = Task.builder().id(1L).title("Old Title").status(StatusTask.TODO).build();
-        var request = TaskRequest.builder().title("Updated Title").status(StatusTask.IN_PROGRESS).build();
+        var request = TaskUpdateRequest.builder().title("Updated Title 2").description("Updated description 2").build();
 
         when(repository.findById(1L)).thenReturn(Optional.of(taskInDatabase));
         when(repository.save(any(Task.class))).then(returnsFirstArg());
@@ -152,11 +153,20 @@ class TaskServiceTest {
         var result = service.updateTask(1L, request);
 
         assertEquals(1L, result.id());
-        assertEquals("Updated Title", result.title());
-        assertEquals(StatusTask.IN_PROGRESS, result.status());
+        assertEquals("Updated Title 2", result.title());
+        assertEquals("Updated description 2", result.description());
 
         verify(repository).findById(1L);
         verify(repository).save(taskInDatabase);
+
+        var eventCaptor = ArgumentCaptor.forClass(TaskUpdatedEvent.class);
+
+        verify(eventProducer).publishTaskUpdated(eventCaptor.capture());
+
+        var event = eventCaptor.getValue();
+
+        assertEquals(1L, event.taskId());
+        assertEquals("Updated Title 2", event.title());
     }
 
 
@@ -164,7 +174,7 @@ class TaskServiceTest {
     @Order(7)
     @DisplayName("Should throw IllegalArgumentException when updating a task that does not exist")
     void updateTask_ThrowsIllegalArgumentException_WhenTaskDoesNotExist() {
-        TaskRequest request = TaskRequest.builder().title("Task").build();
+        var request = TaskUpdateRequest.builder().title("Task").build();
 
         when(repository.findById(999L)).thenReturn(Optional.empty());
 
@@ -211,7 +221,10 @@ class TaskServiceTest {
     @Order(10)
     @DisplayName("Should delete task successfully when task exists")
     void deleteTask_DeletesTask_WhenSuccessful() {
-        Task task = Task.builder().id(1L).build();
+        var task = Task.builder()
+                .id(1L)
+                .title("Study Kafka")
+                .build();
 
         when(repository.findById(1L)).thenReturn(Optional.of(task));
 
@@ -219,8 +232,16 @@ class TaskServiceTest {
 
         verify(repository).findById(1L);
         verify(repository).delete(task);
-    }
 
+        var eventCaptor = ArgumentCaptor.forClass(TaskDeletedEvent.class);
+
+        verify(eventProducer).publishTaskDeleted(eventCaptor.capture());
+
+        var event = eventCaptor.getValue();
+
+        assertEquals(1L, event.taskId());
+        assertEquals("Study Kafka", event.title());
+    }
 
     @Test
     @Order(11)
@@ -238,7 +259,6 @@ class TaskServiceTest {
     @Order(12)
     @DisplayName("Should publish event when task status is changed")
     void updateTaskStatus_PublishesEvent_WhenStatusIsChanged() {
-
         var task = Task.builder()
                 .id(1L)
                 .title("Study Kafka")
@@ -261,5 +281,36 @@ class TaskServiceTest {
         assertEquals(1L, event.taskId());
         assertEquals("TODO", event.previousStatus());
         assertEquals("DONE", event.newStatus());
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("Should update task priority, save to database, and publish event")
+    void shouldUpdateTaskPriorityAndPublishEvent() {
+        var task = Task.builder()
+                .id(8L)
+                .priority(PriorityTask.HIGH)
+                .build();
+
+        when(repository.findById(8L)).thenReturn(Optional.of(task));
+        when(repository.save(any(Task.class))).then(returnsFirstArg());
+
+        var result = service.updateTaskPriority(8L, PriorityTask.ULTRA);
+
+        assertEquals(PriorityTask.ULTRA, result.priority());
+        assertEquals(PriorityTask.ULTRA, task.getPriority());
+        assertNotNull(task.getUpdatedAt());
+
+        verify(repository).findById(8L);
+        verify(repository).save(task);
+
+        var priorityEventCaptor = ArgumentCaptor.forClass(TaskPriorityChangedEvent.class);
+        verify(eventProducer).publishTaskPriorityChanged(priorityEventCaptor.capture());
+
+        var capturedEvent = priorityEventCaptor.getValue();
+
+        assertEquals(8L, capturedEvent.taskId());
+        assertEquals("HIGH", capturedEvent.previousPriority());
+        assertEquals("ULTRA", capturedEvent.newPriority());
     }
 }

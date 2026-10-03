@@ -1,12 +1,13 @@
 package com.Matheus.task_service.service;
 
+import com.Matheus.task_service.domain.PriorityTask;
 import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.dto.TaskResponse;
+import com.Matheus.task_service.dto.TaskUpdateRequest;
 import com.Matheus.task_service.mapper.TaskMapper;
-import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
-import com.Matheus.task_service.messaging.event.TaskStatusChangedEvent;
+import com.Matheus.task_service.messaging.event.*;
 import com.Matheus.task_service.messaging.producer.TaskEventProducer;
 import com.Matheus.task_service.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,13 +50,19 @@ public class TaskService {
         return mapper.toResponse(task);
     }
 
-    public TaskResponse updateTask(Long id, TaskRequest request){
+    public TaskResponse updateTask(Long id, TaskUpdateRequest request){
         var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
-        mapper.updateEntity(request, task);
 
+        mapper.updateEntity(request, task);
         task.setUpdatedAt(LocalDateTime.now());
 
         var updatedTask = repository.save(task);
+
+        var event = new TaskUpdatedEvent(
+                updatedTask.getId(),
+                updatedTask.getTitle());
+
+        eventProducer.publishTaskUpdated(event);
 
         return mapper.toResponse(updatedTask);
     }
@@ -80,10 +87,34 @@ public class TaskService {
         return mapper.toResponse(updatedTask);
     }
 
+    public TaskResponse updateTaskPriority(Long id, PriorityTask priority) {
+        var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        var previousPriority = task.getPriority();
+
+        task.setPriority(priority);
+        task.setUpdatedAt(LocalDateTime.now());
+
+        var updatedTask = repository.save(task);
+        var event = new TaskPriorityChangedEvent(
+                updatedTask.getId(),
+                previousPriority.name(),
+                updatedTask.getPriority().name());
+
+        eventProducer.publishTaskPriorityChanged(event);
+
+        return mapper.toResponse(updatedTask);
+    }
+
     public void deleteTask(Long id){
         var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
 
+        var event = new TaskDeletedEvent(
+                task.getId(),
+                task.getTitle());
+
         repository.delete(task);
+
+        eventProducer.publishTaskDeleted(event);
     }
 
 
