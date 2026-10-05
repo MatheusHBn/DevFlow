@@ -10,6 +10,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.util.UUID;
+
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +29,7 @@ class TaskEventProducerTest {
     @Order(1)
     void publishTaskCreated_PublishesEvent_WhenSuccessful() {
         var event = new TaskCreatedEvent(
+                UUID.randomUUID(),
                 1L,
                 "Study Kafka",
                 "Learn producers and consumers",
@@ -43,6 +46,7 @@ class TaskEventProducerTest {
     @DisplayName("Should publish task status changed event to the correct topic")
     void publishTaskStatusChanged_SendsEventToCorrectTopic() {
         var event = new TaskStatusChangedEvent(
+                UUID.randomUUID(),
                 1L,
                 "TODO",
                 "DONE");
@@ -57,7 +61,7 @@ class TaskEventProducerTest {
     @DisplayName("Should publish TaskPriorityChangedEvent to 'task-priority-changed' topic")
     void publishTaskPriorityChanged_SendsEventToCorrectTopic() {
 
-        var event = new TaskPriorityChangedEvent(8L, "HIGH", "ULTRA");
+        var event = new TaskPriorityChangedEvent( UUID.randomUUID(),8L, "HIGH", "ULTRA");
 
         producer.publishTaskPriorityChanged(event);
 
@@ -69,7 +73,7 @@ class TaskEventProducerTest {
     @DisplayName("Should publish TaskUpdatedEvent to 'task-updated' topic")
     void publishTaskUpdated_SendsEventToCorrectTopic() {
 
-        var event = new TaskUpdatedEvent(1L, "Novo Titulo");
+        var event = new TaskUpdatedEvent(UUID.randomUUID(),1L, "Novo Titulo");
 
         producer.publishTaskUpdated(event);
 
@@ -80,7 +84,7 @@ class TaskEventProducerTest {
     @Order(5)
     @DisplayName("Should publish TaskDeletedEvent to 'task-deleted' topic")
     void publishTaskDeleted_SendsEventToCorrectTopic() {
-        var event = new TaskDeletedEvent(1L, "Um novo título");
+        var event = new TaskDeletedEvent(UUID.randomUUID(),1L, "Um novo título");
 
         producer.publishTaskDeleted(event);
 

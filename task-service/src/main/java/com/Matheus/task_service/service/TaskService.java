@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,7 @@ public class TaskService {
         var savedTask = repository.save(task);
 
         var event = new TaskCreatedEvent(
+                UUID.randomUUID(),
                 savedTask.getId(),
                 savedTask.getTitle(),
                 savedTask.getDescription(),
@@ -59,6 +61,7 @@ public class TaskService {
         var updatedTask = repository.save(task);
 
         var event = new TaskUpdatedEvent(
+                UUID.randomUUID(),
                 updatedTask.getId(),
                 updatedTask.getTitle());
 
@@ -78,6 +81,7 @@ public class TaskService {
         var updatedTask = repository.save(task);
 
         var event = new TaskStatusChangedEvent(
+                UUID.randomUUID(),
                 updatedTask.getId(),
                 previousStatus.name(),
                 updatedTask.getStatus().name());
@@ -96,6 +100,7 @@ public class TaskService {
 
         var updatedTask = repository.save(task);
         var event = new TaskPriorityChangedEvent(
+                UUID.randomUUID(),
                 updatedTask.getId(),
                 previousPriority.name(),
                 updatedTask.getPriority().name());
@@ -109,6 +114,7 @@ public class TaskService {
         var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
 
         var event = new TaskDeletedEvent(
+                UUID.randomUUID(),
                 task.getId(),
                 task.getTitle());
 
@@ -116,6 +122,4 @@ public class TaskService {
 
         eventProducer.publishTaskDeleted(event);
     }
-
-
 }
