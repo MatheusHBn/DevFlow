@@ -12,7 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
 
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -38,7 +38,7 @@ class TaskEventProducerTest {
 
         producer.publishTaskCreated(event);
 
-        verify(kafkaTemplate).send("task-created", event);
+        verify(kafkaTemplate).send("task-created", "1", event);
     }
 
     @Test
@@ -53,7 +53,7 @@ class TaskEventProducerTest {
 
         producer.publishTaskStatusChanged(event);
 
-        verify(kafkaTemplate).send("task-status-changed", event);
+        verify(kafkaTemplate).send("task-status-changed", "1", event);
     }
 
     @Test
@@ -65,7 +65,7 @@ class TaskEventProducerTest {
 
         producer.publishTaskPriorityChanged(event);
 
-        verify(kafkaTemplate).send("task-priority-changed", event);
+        verify(kafkaTemplate).send("task-priority-changed", "8", event);
     }
 
     @Test
@@ -77,7 +77,7 @@ class TaskEventProducerTest {
 
         producer.publishTaskUpdated(event);
 
-        verify(kafkaTemplate).send("task-updated", event);
+        verify(kafkaTemplate).send("task-updated", "1", event);
     }
 
     @Test
@@ -88,6 +88,6 @@ class TaskEventProducerTest {
 
         producer.publishTaskDeleted(event);
 
-        verify(kafkaTemplate).send("task-deleted", event);
+        verify(kafkaTemplate).send("task-deleted", "1", event);
     }
 }

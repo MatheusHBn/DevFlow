@@ -18,8 +18,6 @@ public class AuditService {
 
     public void createAuditLog(TaskCreatedEvent event) {
 
-        System.out.println("EVENT ID RECEBIDO: " + event.eventId());
-
         if (repository.existsByEventId(event.eventId())) {
             return;
         }
@@ -32,8 +30,6 @@ public class AuditService {
                 .description("Task \"%s\" was created.".formatted(event.title()))
                 .createdAt(LocalDateTime.now())
                 .build();
-
-        System.out.println("EVENT ID SALVO: " + audit.getEventId());
 
         repository.save(audit);
     }
