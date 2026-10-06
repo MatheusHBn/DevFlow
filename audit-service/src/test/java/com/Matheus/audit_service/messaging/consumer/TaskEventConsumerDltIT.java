@@ -14,6 +14,7 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,9 +44,9 @@ public class TaskEventConsumerDltIT {
 
     @Test
     @Order(1)
-    @DisplayName("Deve tentar 4 vezes (1 normal + 3 retries) e enviar para DLT quando sempre falhar")
-    void shouldRetryAndSendToDltWhenProcessingAlwaysFails() throws InterruptedException {
-        var event = new TaskCreatedEvent(1L, "Fail Task", "Desc", "TODO", "HIGH");
+    @DisplayName("Should try 4 times (1 normal + 3 retries) and send to DLT when it always fails")
+    void consume_RetriesAndSendsToDlt_WhenProcessingAlwaysFails() throws InterruptedException {
+        var event = new TaskCreatedEvent(UUID.randomUUID(),1L, "Fail Task", "Desc", "TODO", "HIGH");
 
         doThrow(new RuntimeException("Simulated Database Error")).when(service).createAuditLog(any(TaskCreatedEvent.class));
 
@@ -60,9 +61,9 @@ public class TaskEventConsumerDltIT {
 
     @Test
     @Order(2)
-    @DisplayName("Deve processar de primeira e não fazer retry quando houver sucesso")
-    void shouldNotRetryWhenProcessingSucceeds() {
-        var event = new TaskCreatedEvent(2L, "Success Task", "Desc", "TODO", "HIGH");
+    @DisplayName("Should process on the first try and not retry when successful")
+    void consume_DoesNotRetry_WhenProcessingSucceeds() {
+        var event = new TaskCreatedEvent(UUID.randomUUID(),2L, "Success Task", "Desc", "TODO", "HIGH");
 
         doNothing().when(service).createAuditLog(any(TaskCreatedEvent.class));
 
@@ -73,9 +74,9 @@ public class TaskEventConsumerDltIT {
 
     @Test
     @Order(3)
-    @DisplayName("Deve parar de tentar assim que processar com sucesso (ex: falha 2x e acerta na 3ª)")
-    void shouldStopRetryingWhenProcessingSucceeds() {
-        var event = new TaskCreatedEvent(3L, "Recovery Task", "Desc", "TODO", "HIGH");
+    @DisplayName("Should stop retrying as soon as it processes successfully (e.g., fails 2x and succeeds on 3rd)")
+    void consume_StopsRetrying_WhenProcessingSucceedsAfterFailures() {
+        var event = new TaskCreatedEvent(UUID.randomUUID(),3L, "Recovery Task", "Desc", "TODO", "HIGH");
 
         doThrow(new RuntimeException("Error 1")).doThrow(new RuntimeException("Error 2")).doNothing()
                 .when(service).createAuditLog(any(TaskCreatedEvent.class));

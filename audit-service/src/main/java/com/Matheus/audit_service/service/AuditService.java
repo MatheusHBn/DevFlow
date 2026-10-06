@@ -17,7 +17,15 @@ public class AuditService {
     private final AuditLogRepository repository;
 
     public void createAuditLog(TaskCreatedEvent event) {
+
+        System.out.println("EVENT ID RECEBIDO: " + event.eventId());
+
+        if (repository.existsByEventId(event.eventId())) {
+            return;
+        }
+
         var audit = Audit.builder()
+                .eventId(event.eventId())
                 .eventType(EventType.TASK_CREATED)
                 .entityType(EntityType.TASK)
                 .entityId(event.taskId())
@@ -25,11 +33,18 @@ public class AuditService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
+        System.out.println("EVENT ID SALVO: " + audit.getEventId());
+
         repository.save(audit);
     }
 
     public void createStatusChangeAudit(TaskStatusChangedEvent event) {
+        if (repository.existsByEventId(event.eventId())) {
+            return;
+        }
+
         var audit = Audit.builder()
+                .eventId(event.eventId())
                 .eventType(EventType.TASK_STATUS_CHANGED)
                 .entityType(EntityType.TASK)
                 .entityId(event.taskId())
@@ -43,7 +58,12 @@ public class AuditService {
     }
 
     public void createPriorityChangeAudit(TaskPriorityChangedEvent event) {
+        if (repository.existsByEventId(event.eventId())) {
+            return;
+        }
+
         var audit = Audit.builder()
+                .eventId(event.eventId())
                 .eventType(EventType.TASK_PRIORITY_CHANGED)
                 .entityType(EntityType.TASK)
                 .entityId(event.taskId())
@@ -57,7 +77,12 @@ public class AuditService {
     }
 
     public void createUpdateAudit(TaskUpdatedEvent event) {
+        if (repository.existsByEventId(event.eventId())) {
+            return;
+        }
+
         var audit = Audit.builder()
+                .eventId(event.eventId())
                 .eventType(EventType.TASK_UPDATED)
                 .entityType(EntityType.TASK)
                 .entityId(event.taskId())
@@ -69,7 +94,12 @@ public class AuditService {
     }
 
     public void createDeleteAudit(TaskDeletedEvent event) {
+        if (repository.existsByEventId(event.eventId())) {
+            return;
+        }
+
         var audit = Audit.builder()
+                .eventId(event.eventId())
                 .eventType(EventType.TASK_DELETED)
                 .entityType(EntityType.TASK)
                 .entityId(event.taskId())

@@ -9,6 +9,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.UUID;
+
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +27,7 @@ class TaskEventConsumerTest {
     void consumeTaskCreated_DelegatesToAuditService_WhenTaskCreatedEventIsReceived() {
 
         var event = new TaskCreatedEvent(
+                UUID.randomUUID(),
                 1L,
                 "Configurar banco de dados",
                 "Descrição da task",

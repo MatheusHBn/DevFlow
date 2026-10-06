@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -37,6 +39,7 @@ class AuditServiceTest {
         String taskTitle = "Configurar banco de dados";
 
         var event = new TaskCreatedEvent(
+                UUID.randomUUID(),
                 expectedTaskId,
                 taskTitle,
                 "Descrição da task",
@@ -52,6 +55,7 @@ class AuditServiceTest {
         assertEquals(EntityType.TASK, savedAudit.getEntityType());
         assertEquals(expectedTaskId, savedAudit.getEntityId());
         assertEquals("Task \"" + taskTitle + "\" was created.", savedAudit.getDescription());
+        assertNotNull(event.eventId());
         assertNotNull(savedAudit.getCreatedAt());
     }
 
@@ -59,7 +63,7 @@ class AuditServiceTest {
     @Order(2)
     @DisplayName("Should correctly map and save audit log when TaskStatusChangedEvent is received")
     void createStatusChangeAudit_SavesAudit_WhenTaskStatusChangedEventReceived() {
-        var event = new TaskStatusChangedEvent(2L, "TODO", "DONE");
+        var event = new TaskStatusChangedEvent(UUID.randomUUID(),2L, "TODO", "DONE");
 
         service.createStatusChangeAudit(event);
 
@@ -70,6 +74,7 @@ class AuditServiceTest {
         assertEquals(EntityType.TASK, savedAudit.getEntityType());
         assertEquals(2L, savedAudit.getEntityId());
         assertEquals("Task 2 changed status from TODO to DONE.", savedAudit.getDescription());
+        assertNotNull(event.eventId());
         assertNotNull(savedAudit.getCreatedAt());
     }
 
@@ -77,7 +82,7 @@ class AuditServiceTest {
     @Order(3)
     @DisplayName("Should correctly map and save audit log when TaskPriorityChangedEvent is received")
     void createPriorityChangeAudit_SavesAudit_WhenTaskPriorityChangedEventReceived() {
-        var event = new TaskPriorityChangedEvent(3L, "LOW", "HIGH");
+        var event = new TaskPriorityChangedEvent(UUID.randomUUID(),3L, "LOW", "HIGH");
 
         service.createPriorityChangeAudit(event);
 
@@ -88,6 +93,7 @@ class AuditServiceTest {
         assertEquals(EntityType.TASK, savedAudit.getEntityType());
         assertEquals(3L, savedAudit.getEntityId());
         assertEquals("Task 3 changed priority from LOW to HIGH.", savedAudit.getDescription());
+        assertNotNull(event.eventId());
         assertNotNull(savedAudit.getCreatedAt());
     }
 
@@ -95,7 +101,7 @@ class AuditServiceTest {
     @Order(4)
     @DisplayName("Should correctly map and save audit log when TaskUpdatedEvent is received")
     void createUpdateAudit_SavesAudit_WhenTaskUpdatedEventReceived() {
-        var event = new TaskUpdatedEvent(4L, "Título Atualizado");
+        var event = new TaskUpdatedEvent(UUID.randomUUID(), 4L, "Título Atualizado");
 
         service.createUpdateAudit(event);
 
@@ -106,6 +112,7 @@ class AuditServiceTest {
         assertEquals(EntityType.TASK, savedAudit.getEntityType());
         assertEquals(4L, savedAudit.getEntityId());
         assertEquals("Task \"Título Atualizado\" was updated.", savedAudit.getDescription());
+        assertNotNull(event.eventId());
         assertNotNull(savedAudit.getCreatedAt());
     }
 
@@ -113,7 +120,7 @@ class AuditServiceTest {
     @Order(5)
     @DisplayName("Should correctly map and save audit log when TaskDeletedEvent is received")
     void createDeleteAudit_SavesAudit_WhenTaskDeletedEventReceived() {
-        var event = new TaskDeletedEvent(5L, "Título Deletado");
+        var event = new TaskDeletedEvent(UUID.randomUUID(),5L, "Título Deletado");
 
         service.createDeleteAudit(event);
 
@@ -124,6 +131,31 @@ class AuditServiceTest {
         assertEquals(EntityType.TASK, savedAudit.getEntityType());
         assertEquals(5L, savedAudit.getEntityId());
         assertEquals("Task \"Título Deletado\" was deleted.", savedAudit.getDescription());
+        assertNotNull(event.eventId());
         assertNotNull(savedAudit.getCreatedAt());
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("Should ignore event when it was already processed")
+    void shouldIgnoreEvent_WhenEventWasAlreadyProcessed() {
+
+        var eventId = UUID.randomUUID();
+
+        var event = new TaskCreatedEvent(
+                eventId,
+                1L,
+                "Configurar banco",
+                "Descrição",
+                "PENDING",
+                "HIGH"
+        );
+
+        when(repository.existsByEventId(eventId)).thenReturn(true);
+
+        service.createAuditLog(event);
+
+        assertNotNull(event.eventId());
+        verify(repository, never()).save(any(Audit.class));
     }
 }
