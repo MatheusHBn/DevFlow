@@ -20,6 +20,7 @@ spring:
 
     listener:
       ack-mode: manual
+      concurrency: 3
 
     consumer:
       group-id: audit-service

@@ -27,6 +27,14 @@ public class TaskService {
 
     public TaskResponse createTask(TaskRequest request){
         var task = mapper.toEntity(request);
+
+        if (task.getStatus() == null) {
+            task.setStatus(StatusTask.TODO);
+        }
+
+        task.setCreatedAt(LocalDateTime.now());
+        task.setUpdatedAt(LocalDateTime.now());
+
         var savedTask = repository.save(task);
 
         var event = new TaskCreatedEvent(

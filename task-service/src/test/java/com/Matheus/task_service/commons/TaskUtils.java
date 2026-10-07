@@ -22,7 +22,7 @@ public class TaskUtils {
     }
 
     public TaskRequest createTaskRequest(){
-        return TaskRequest.builder().title("Study Kafka").description("Learn producers and consumers").status(StatusTask.TODO).priority(PriorityTask.MEDIUM).projectId(null).build();
+        return TaskRequest.builder().title("Study Kafka").description("Learn producers and consumers").status(StatusTask.TODO).priority(PriorityTask.MEDIUM).build();
     }
 
 }
