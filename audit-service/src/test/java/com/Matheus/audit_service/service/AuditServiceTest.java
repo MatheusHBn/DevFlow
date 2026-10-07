@@ -139,7 +139,6 @@ class AuditServiceTest {
     @Order(6)
     @DisplayName("Should ignore event when it was already processed")
     void shouldIgnoreEvent_WhenEventWasAlreadyProcessed() {
-
         var eventId = UUID.randomUUID();
 
         var event = new TaskCreatedEvent(
