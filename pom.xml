@@ -30,6 +30,7 @@
 		<module>task-service</module>
 		<module>notification-service</module>
 		<module>audit-service</module>
+		<module>api-gateway</module>
 	</modules>
 
 </project>

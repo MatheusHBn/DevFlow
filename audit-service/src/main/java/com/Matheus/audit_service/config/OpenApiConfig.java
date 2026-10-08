@@ -13,7 +13,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("DevFlow Audit Service API")
-                        .version("1.2.0")
+                        .version("1.3.0")
                         .description("REST API responsible for retrieving task audit logs."));
     }
 }
