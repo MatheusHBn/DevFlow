@@ -1,0 +1,7 @@
+{
+  "id": 1,
+  "taskId": 42,
+  "message": "Task \"Implement JWT authentication\" was created.",
+  "read": false,
+  "createdAt": "2026-10-07T18:30:00"
+}

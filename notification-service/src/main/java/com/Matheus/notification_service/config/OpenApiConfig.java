@@ -1,4 +1,4 @@
-package com.Matheus.task_service.config;
+package com.Matheus.notification_service.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -11,8 +11,8 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI().info(new Info()
-                .title("DevFlow Task Service API")
+                .title("DevFlow Notification Service API")
                 .version("1.1.0")
-                .description("REST API responsible for task management in the DevFlow platform."));
+                .description("REST API responsible for retrieving and managing task notifications."));
     }
 }
