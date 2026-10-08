@@ -7,6 +7,7 @@ import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.dto.TaskResponse;
 import com.Matheus.task_service.dto.TaskUpdateRequest;
+import com.Matheus.task_service.exception.TaskNotFound;
 import com.Matheus.task_service.mapper.TaskMapper;
 import com.Matheus.task_service.messaging.event.*;
 import com.Matheus.task_service.messaging.producer.TaskEventProducer;
@@ -130,11 +131,11 @@ class TaskServiceTest {
 
     @Test
     @Order(5)
-    @DisplayName("Should throw IllegalArgumentException when searching for a non-existing task ID")
+    @DisplayName("Should throw TaskNotFound when searching for a non-existing task ID")
     void findTaskById_ThrowsIllegalArgumentException_WhenTaskIdDoesNotExist() {
         when(repository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.findTaskById(999L));
+        assertThrows(TaskNotFound.class, () -> service.findTaskById(999L));
 
         verify(repository).findById(999L);
     }
@@ -172,13 +173,13 @@ class TaskServiceTest {
 
     @Test
     @Order(7)
-    @DisplayName("Should throw IllegalArgumentException when updating a task that does not exist")
+    @DisplayName("Should throw TaskNotFound when updating a task that does not exist")
     void updateTask_ThrowsIllegalArgumentException_WhenTaskDoesNotExist() {
         var request = TaskUpdateRequest.builder().title("Task").build();
 
         when(repository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.updateTask(999L, request));
+        assertThrows(TaskNotFound.class, () -> service.updateTask(999L, request));
 
         verify(repository).findById(999L);
         verify(repository, never()).save(any());
@@ -206,11 +207,11 @@ class TaskServiceTest {
 
     @Test
     @Order(9)
-    @DisplayName("Should throw IllegalArgumentException when updating status of a non-existing task")
+    @DisplayName("Should throw TaskNotFound when updating status of a non-existing task")
     void updateTaskStatus_ThrowsIllegalArgumentException_WhenTaskDoesNotExist() {
         when(repository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.updateTaskStatus(999L, StatusTask.DONE));
+        assertThrows(TaskNotFound.class, () -> service.updateTaskStatus(999L, StatusTask.DONE));
 
         verify(repository).findById(999L);
         verify(repository, never()).save(any());
@@ -245,11 +246,11 @@ class TaskServiceTest {
 
     @Test
     @Order(11)
-    @DisplayName("Should throw IllegalArgumentException when deleting a non-existing task")
+    @DisplayName("Should throw TaskNotFound when deleting a non-existing task")
     void deleteTask_ThrowsIllegalArgumentException_WhenTaskDoesNotExist() {
         when(repository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.deleteTask(999L));
+        assertThrows(TaskNotFound.class, () -> service.deleteTask(999L));
 
         verify(repository).findById(999L);
         verify(repository, never()).delete(any());

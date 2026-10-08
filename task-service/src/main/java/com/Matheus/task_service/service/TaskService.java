@@ -6,6 +6,8 @@ import com.Matheus.task_service.domain.Task;
 import com.Matheus.task_service.dto.TaskRequest;
 import com.Matheus.task_service.dto.TaskResponse;
 import com.Matheus.task_service.dto.TaskUpdateRequest;
+import com.Matheus.task_service.exception.InvalidTaskException;
+import com.Matheus.task_service.exception.TaskNotFound;
 import com.Matheus.task_service.mapper.TaskMapper;
 import com.Matheus.task_service.messaging.event.*;
 import com.Matheus.task_service.messaging.producer.TaskEventProducer;
@@ -56,12 +58,12 @@ public class TaskService {
     }
 
     public TaskResponse findTaskById(Long id){
-        Task task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Id not found"));
+        Task task = repository.findById(id).orElseThrow(() -> new TaskNotFound("Id not found"));
         return mapper.toResponse(task);
     }
 
     public TaskResponse updateTask(Long id, TaskUpdateRequest request){
-        var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        var task = repository.findById(id).orElseThrow(() -> new TaskNotFound("Task not found"));
 
         mapper.updateEntity(request, task);
         task.setUpdatedAt(LocalDateTime.now());
@@ -79,9 +81,12 @@ public class TaskService {
     }
 
     public TaskResponse updateTaskStatus(Long id, StatusTask status){
-        var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
-
+        var task = repository.findById(id).orElseThrow(() -> new TaskNotFound("Task not found"));
         var previousStatus = task.getStatus();
+
+        if (previousStatus == StatusTask.DONE && status != StatusTask.DONE) {
+            throw new InvalidTaskException("A completed task cannot change its status.");
+        }
 
         task.setStatus(status);
         task.setUpdatedAt(LocalDateTime.now());
@@ -100,7 +105,7 @@ public class TaskService {
     }
 
     public TaskResponse updateTaskPriority(Long id, PriorityTask priority) {
-        var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        var task = repository.findById(id).orElseThrow(() -> new TaskNotFound("Task not found"));
         var previousPriority = task.getPriority();
 
         task.setPriority(priority);
@@ -119,7 +124,7 @@ public class TaskService {
     }
 
     public void deleteTask(Long id){
-        var task = repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        var task = repository.findById(id).orElseThrow(() -> new TaskNotFound("Task not found"));
 
         var event = new TaskDeletedEvent(
                 UUID.randomUUID(),
