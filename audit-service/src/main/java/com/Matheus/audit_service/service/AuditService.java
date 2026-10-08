@@ -3,18 +3,23 @@ package com.Matheus.audit_service.service;
 import com.Matheus.audit_service.domain.Audit;
 import com.Matheus.audit_service.domain.EntityType;
 import com.Matheus.audit_service.domain.EventType;
+import com.Matheus.audit_service.dto.AuditResponse;
+import com.Matheus.audit_service.exception.AuditNotFound;
+import com.Matheus.audit_service.mapper.AuditMapper;
 import com.Matheus.audit_service.messaging.event.*;
 import com.Matheus.audit_service.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AuditService {
 
     private final AuditLogRepository repository;
+    private final AuditMapper mapper;
 
     public void createAuditLog(TaskCreatedEvent event) {
 
@@ -104,5 +109,16 @@ public class AuditService {
                 .build();
 
         repository.save(audit);
+    }
+
+    public List<AuditResponse> findAllAudits() {
+        var audits = repository.findAll();
+        return mapper.toResponseList(audits);
+    }
+
+    public AuditResponse findAuditById(Long id) {
+        var audit = repository.findById(id).orElseThrow(() -> new AuditNotFound("Audit log not found"));
+
+        return mapper.toResponse(audit);
     }
 }

@@ -1,0 +1,9 @@
+{
+  "id": 1,
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "eventType": "TASK_CREATED",
+  "entityType": "TASK",
+  "entityId": 42,
+  "description": "Task \"Implement JWT authentication\" was created.",
+  "createdAt": "2026-10-07T18:30:00"
+}
