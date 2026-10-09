@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI().info(new Info()
                 .title("DevFlow Notification Service API")
-                .version("1.3.0")
+                .version("2.0.0")
                 .description("REST API responsible for retrieving and managing task notifications."));
     }
 }

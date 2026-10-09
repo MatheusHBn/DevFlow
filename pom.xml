@@ -31,6 +31,7 @@
 		<module>notification-service</module>
 		<module>audit-service</module>
 		<module>api-gateway</module>
+		<module>auth-service</module>
 	</modules>
 
 </project>
