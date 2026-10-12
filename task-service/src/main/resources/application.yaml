@@ -1,26 +1,12 @@
 server:
   port: 8081
-  address: 127.0.0.1
+  address: ${SERVER_ADDRESS:127.0.0.1}
 
 spring:
-  application:
-    name: task-service
-
   datasource:
-    url: jdbc:postgresql://localhost:5433/task_db
-    username: postgres
-    password: postgres
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-
-  flyway:
-    enabled: true
+    url: ${TASK_DB_URL:jdbc:postgresql://localhost:5433/task_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
 
   kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}

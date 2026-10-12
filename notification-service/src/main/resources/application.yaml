@@ -1,35 +1,12 @@
 server:
   port: 8082
-  address: 127.0.0.1
+  address: ${SERVER_ADDRESS:127.0.0.1}
 
 spring:
-  application:
-    name: notification-service
-
   datasource:
-    url: jdbc:postgresql://localhost:5433/notification_db
-    username: postgres
-    password: postgres
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-
-  flyway:
-    enabled: true
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5433/notification_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
 
   kafka:
-    bootstrap-servers: localhost:9092
-
-    consumer:
-      group-id: notification-service
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-
-      properties:
-        spring.json.use.type.headers: true
-        spring.json.type.mapping: "com.Matheus.task_service.messaging.event.TaskCreatedEvent:com.Matheus.notification_service.messaging.event.TaskCreatedEvent,com.Matheus.task_service.messaging.event.TaskStatusChangedEvent:com.Matheus.notification_service.messaging.event.TaskStatusChangedEvent,com.Matheus.task_service.messaging.event.TaskPriorityChangedEvent:com.Matheus.notification_service.messaging.event.TaskPriorityChangedEvent,com.Matheus.task_service.messaging.event.TaskUpdatedEvent:com.Matheus.notification_service.messaging.event.TaskUpdatedEvent,com.Matheus.task_service.messaging.event.TaskDeletedEvent:com.Matheus.notification_service.messaging.event.TaskDeletedEvent"
-
-    producer:
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}

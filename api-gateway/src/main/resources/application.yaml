@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+  address: ${SERVER_ADDRESS:127.0.0.1}
 
 spring:
   application:
@@ -10,21 +11,25 @@ spring:
       server:
         webflux:
           routes:
-
             - id: task-service
-              uri: http://localhost:8081
+              uri: ${TASK_SERVICE_URL:http://localhost:8081}
               predicates:
                 - Path=/v1/tasks/**
 
             - id: notification-service
-              uri: http://localhost:8082
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path=/v1/notifications/**
 
             - id: audit-service
-              uri: http://localhost:8083
+              uri: ${AUDIT_SERVICE_URL:http://localhost:8083}
               predicates:
                 - Path=/v1/audits/**
+
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/v1/auth/**
 
 jwt:
   secret: ${JWT_SECRET}
