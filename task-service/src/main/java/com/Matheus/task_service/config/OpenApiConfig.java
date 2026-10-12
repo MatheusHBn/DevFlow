@@ -12,7 +12,7 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI().info(new Info()
                 .title("DevFlow Task Service API")
-                .version("2.0.11")
+                .version("2.1.0")
                 .description("REST API responsible for task management in the DevFlow platform."));
     }
 }

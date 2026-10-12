@@ -1,6 +1,7 @@
 package com.Matheus.api_gateway.security;
 
 import com.Matheus.api_gateway.service.JwtService;
+import com.Matheus.api_gateway.service.RouteAuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -17,13 +18,16 @@ import reactor.core.publisher.Mono;
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtService jwtService;
+    private final RouteAuthorizationService routeAuthorizationService;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, @NonNull GatewayFilterChain chain) {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        if (path.equals("/v1/auth/login") || path.equals("/v1/auth/register")) {
+        var method = exchange.getRequest().getMethod();
+
+        if (routeAuthorizationService.isPublicRoute(path, method)) {
             return chain.filter(exchange);
         }
 
@@ -41,6 +45,16 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             return unauthorized(exchange);
         }
 
+        String role = jwtService.extractRole(token);
+
+        if (role == null) {
+            return forbidden(exchange);
+        }
+
+        if (!routeAuthorizationService.isAuthorized(path, role)) {
+            return forbidden(exchange);
+        }
+
         return chain.filter(exchange);
     }
 
@@ -49,6 +63,13 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         return exchange.getResponse().setComplete();
     }
+
+    private Mono<Void> forbidden(ServerWebExchange exchange) {
+        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+
+        return exchange.getResponse().setComplete();
+    }
+
 
     @Override
     public int getOrder() {

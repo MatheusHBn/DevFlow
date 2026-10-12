@@ -37,4 +37,8 @@ public class JwtService {
             return false;
         }
     }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
 }

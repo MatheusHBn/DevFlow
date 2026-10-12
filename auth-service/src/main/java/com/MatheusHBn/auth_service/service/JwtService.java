@@ -28,8 +28,15 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         long now = System.currentTimeMillis();
 
+        String role = userDetails.getAuthorities()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("User has no authority"))
+                .getAuthority();
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("role", role)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + expiration))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
