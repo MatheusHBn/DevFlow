@@ -1,0 +1,6 @@
+{
+  "id": 1,
+  "username": "matheus",
+  "email": "matheus@example.com",
+  "token": "test.jwt.token"
+}
