@@ -73,7 +73,7 @@ public class NotificationService {
     public void createDeleteNotification(TaskDeletedEvent event) {
         var notification = Notification.builder()
                 .taskId(event.taskId())
-                .message("Task \" + event.title() + \" was deleted.")
+                .message("Task \"" + event.title() + "\" was deleted.")
                 .read(false)
                 .createdAt(LocalDateTime.now())
                 .build();
