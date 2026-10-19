@@ -50,6 +50,8 @@ services:
       SERVER_ADDRESS: 0.0.0.0
       TASK_DB_URL: jdbc:postgresql://postgres:5432/task_db
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,6 +72,8 @@ services:
       SERVER_ADDRESS: 0.0.0.0
       NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/notification_db
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,6 +94,8 @@ services:
       SERVER_ADDRESS: 0.0.0.0
       AUDIT_DB_URL: jdbc:postgresql://postgres:5432/audit_db
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    ports:
+      - "8083:8083"
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,6 +115,8 @@ services:
       SERVER_PORT: 8084
       SERVER_ADDRESS: 0.0.0.0
       AUTH_DB_URL: jdbc:postgresql://postgres:5432/devflow_auth
+    ports:
+      - "8084:8084"
     depends_on:
       postgres:
         condition: service_healthy

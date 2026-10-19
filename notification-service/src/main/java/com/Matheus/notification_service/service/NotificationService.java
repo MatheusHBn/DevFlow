@@ -7,7 +7,10 @@ import com.Matheus.notification_service.mapper.NotificationMapper;
 import com.Matheus.notification_service.messaging.event.*;
 import com.Matheus.notification_service.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +22,8 @@ public class NotificationService {
     private final NotificationRepository repository;
     private final NotificationMapper mapper;
 
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
+
     public void createNotification(TaskCreatedEvent event) {
 
         var notification = Notification.builder()
@@ -29,6 +34,8 @@ public class NotificationService {
                 .build();
 
         repository.save(notification);
+
+        log.info("Notification created for taskId={}", event.taskId());
     }
 
     public void createStatusChangeNotification(TaskStatusChangedEvent event) {

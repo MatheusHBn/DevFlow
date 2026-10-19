@@ -8,7 +8,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.*;
+import java.nio.charset.StandardCharsets;
+
+import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -19,6 +21,8 @@ class TaskEventConsumerTest {
 
     @InjectMocks
     private TaskEventConsumer consumer;
+
+    private static final byte[] CORRELATION_ID = "test-correlation-id".getBytes(StandardCharsets.UTF_8);
 
     @Test
     @Order(1)
@@ -31,9 +35,9 @@ class TaskEventConsumerTest {
                 "TODO",
                 "MEDIUM");
 
-        consumer.consumeTaskCreated(event);
+        consumer.consumeTaskCreated(event, CORRELATION_ID);
 
-        verify(service, times(1)).createNotification(event);
+        verify(service).createNotification(event);
     }
 
     @Test
@@ -45,7 +49,7 @@ class TaskEventConsumerTest {
                 "DONE",
                 "IN_PROGRESS");
 
-        consumer.consumeTaskStatusChanged(event);
+        consumer.consumeTaskStatusChanged(event, CORRELATION_ID);
 
         verify(service).createStatusChangeNotification(event);
     }
@@ -59,7 +63,7 @@ class TaskEventConsumerTest {
                 "ULTRA",
                 "LOW");
 
-        consumer.consumeTaskPriorityChanged(event);
+        consumer.consumeTaskPriorityChanged(event, CORRELATION_ID);
 
         verify(service).createPriorityChangeNotification(event);
     }
@@ -72,7 +76,7 @@ class TaskEventConsumerTest {
                 7L,
                 "Estudar Kafka Avançado");
 
-        consumer.consumeTaskUpdated(event);
+        consumer.consumeTaskUpdated(event, CORRELATION_ID);
 
         verify(service).createUpdateNotification(event);
     }
@@ -85,7 +89,7 @@ class TaskEventConsumerTest {
                 6L,
                 "Test notification");
 
-        consumer.consumeTaskDeleted(event);
+        consumer.consumeTaskDeleted(event, CORRELATION_ID);
 
         verify(service).createDeleteNotification(event);
     }

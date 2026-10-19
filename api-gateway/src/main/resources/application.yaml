@@ -31,5 +31,14 @@ spring:
               predicates:
                 - Path=/v1/auth/**
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+
 jwt:
   secret: ${JWT_SECRET}

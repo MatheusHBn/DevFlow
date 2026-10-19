@@ -11,9 +11,11 @@ import com.MatheusHBn.auth_service.mapper.UserMapper;
 import com.MatheusHBn.auth_service.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -35,10 +38,12 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByUsername(request.username())) {
+            log.warn("Registration failed: reason=username_already_exists");
             throw new UserAlreadyExistsException("Username already exists");
         }
 
         if (userRepository.existsByEmail(request.email())) {
+            log.warn("Registration failed: reason=email_already_exists");
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
@@ -47,24 +52,28 @@ public class AuthService {
         user.setCreatedAt(LocalDateTime.now());
         var savedUser = userRepository.save(user);
 
+        log.info("Registration successful: userId={}", savedUser.getId());
+
         return userMapper.toAuthResponse(savedUser);
     }
 
     public LoginResponse login(LoginRequest request) {
+        Authentication authentication;
 
-        var authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                request.username(), request.password()));
+        try {
+             authentication = authenticationManager.authenticate
+                     (new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        } catch (AuthenticationException exception) {
+            log.warn("Authentication failed: reason=invalid_credentials");
+            throw exception;
+        }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
         var user = userRepository.findByUsername(Objects.requireNonNull(userDetails).getUsername()).orElseThrow();
-
         String token = jwtService.generateToken(userDetails);
 
-        return new LoginResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                token);
+        log.info("Authentication successful: userId={}", user.getId());
+
+        return new LoginResponse(user.getId(), user.getUsername(), user.getEmail(), token);
     }
 }

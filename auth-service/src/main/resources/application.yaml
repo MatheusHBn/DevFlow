@@ -7,3 +7,16 @@ spring:
     url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5433/devflow_auth}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] [correlationId=%X{correlationId}] %logger{36} - %msg%n"

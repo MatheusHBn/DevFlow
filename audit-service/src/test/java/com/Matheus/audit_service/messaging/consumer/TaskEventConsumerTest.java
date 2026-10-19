@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.support.Acknowledgment;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,7 +40,9 @@ class TaskEventConsumerTest {
                 "PENDING",
                 "HIGH");
 
-        taskEventConsumer.consumeTaskCreated(event, acknowledgment);
+        byte[] correlationId = "test-correlation-id".getBytes(StandardCharsets.UTF_8);
+
+        taskEventConsumer.consumeTaskCreated(event, correlationId, acknowledgment);
 
         verify(service).createAuditLog(event);
         verify(acknowledgment).acknowledge();
@@ -49,7 +52,6 @@ class TaskEventConsumerTest {
     @Order(2)
     @DisplayName("Should not acknowledge message when processing fails")
     void consumeTaskCreated_DoesNotAcknowledge_WhenProcessingFails() {
-
         var event = new TaskCreatedEvent(
                 UUID.randomUUID(),
                 1L,
@@ -58,9 +60,11 @@ class TaskEventConsumerTest {
                 "PENDING",
                 "HIGH");
 
+        byte[] correlationId = "test-correlation-id".getBytes(StandardCharsets.UTF_8);
+
         doThrow(new RuntimeException("Database error")).when(service).createAuditLog(event);
 
-        assertThrows(RuntimeException.class, () -> taskEventConsumer.consumeTaskCreated(event, acknowledgment));
+        assertThrows(RuntimeException.class, () -> taskEventConsumer.consumeTaskCreated(event, correlationId, acknowledgment));
 
         verify(acknowledgment, never()).acknowledge();
     }
