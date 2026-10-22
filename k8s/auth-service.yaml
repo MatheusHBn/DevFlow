@@ -1,0 +1,90 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: devflow
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: auth-service
+
+  template:
+    metadata:
+      labels:
+        app: auth-service
+
+    spec:
+      containers:
+        - name: auth-service
+          image: devflow-auth-service:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8084
+
+          envFrom:
+            - secretRef:
+                name: devflow-app-env
+
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+
+            - name: SERVER_ADDRESS
+              value: "0.0.0.0"
+
+            - name: AUTH_DB_URL
+              value: "jdbc:postgresql://postgres:5432/devflow_auth"
+
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "192Mi"
+            limits:
+              cpu: "750m"
+              memory: "768Mi"
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 48
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8084
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: devflow
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: auth-service
+
+  ports:
+    - port: 8084
+      targetPort: 8084
