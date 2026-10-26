@@ -1,5 +1,6 @@
 package com.Matheus.task_service.messaging.producer;
 
+import com.Matheus.task_service.config.PostgresContainerConfig;
 import com.Matheus.task_service.domain.PriorityTask;
 import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.messaging.event.TaskCreatedEvent;
@@ -8,11 +9,16 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
@@ -26,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @EmbeddedKafka(partitions = 3, topics = "task-created")
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Import(PostgresContainerConfig.class)
 public class TaskEventProducerIT {
 
     @Autowired

@@ -3,8 +3,10 @@ package com.Matheus.task_service.messaging.producer;
 import com.Matheus.task_service.domain.PriorityTask;
 import com.Matheus.task_service.domain.StatusTask;
 import com.Matheus.task_service.messaging.event.*;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -12,7 +14,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.UUID;
 
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -38,7 +42,11 @@ class TaskEventProducerTest {
 
         producer.publishTaskCreated(event);
 
-        verify(kafkaTemplate).send("task-created", "1", event);
+        var record = captureProducerRecord();
+
+        assertEquals("task-created", record.topic());
+        assertEquals("1", record.key());
+        assertSame(event, record.value());
     }
 
     @Test
@@ -53,19 +61,31 @@ class TaskEventProducerTest {
 
         producer.publishTaskStatusChanged(event);
 
-        verify(kafkaTemplate).send("task-status-changed", "1", event);
+        var record = captureProducerRecord();
+
+        assertEquals("task-status-changed", record.topic());
+        assertEquals("1", record.key());
+        assertSame(event, record.value());
+
     }
 
     @Test
     @Order(3)
     @DisplayName("Should publish TaskPriorityChangedEvent to 'task-priority-changed' topic")
     void publishTaskPriorityChanged_SendsEventToCorrectTopic() {
-
-        var event = new TaskPriorityChangedEvent( UUID.randomUUID(),8L, "HIGH", "ULTRA");
+        var event = new TaskPriorityChangedEvent(
+                UUID.randomUUID(),
+                8L,
+                "HIGH",
+                "ULTRA");
 
         producer.publishTaskPriorityChanged(event);
 
-        verify(kafkaTemplate).send("task-priority-changed", "8", event);
+        var record = captureProducerRecord();
+
+        assertEquals("task-priority-changed", record.topic());
+        assertEquals("8", record.key());
+        assertSame(event, record.value());
     }
 
     @Test
@@ -73,21 +93,38 @@ class TaskEventProducerTest {
     @DisplayName("Should publish TaskUpdatedEvent to 'task-updated' topic")
     void publishTaskUpdated_SendsEventToCorrectTopic() {
 
-        var event = new TaskUpdatedEvent(UUID.randomUUID(),1L, "Novo Titulo");
+        var event = new TaskUpdatedEvent(UUID.randomUUID(), 1L, "Novo Titulo");
 
         producer.publishTaskUpdated(event);
 
-        verify(kafkaTemplate).send("task-updated", "1", event);
+        var record = captureProducerRecord();
+
+        assertEquals("task-updated", record.topic());
+        assertEquals("1", record.key());
+        assertSame(event, record.value());
     }
 
     @Test
     @Order(5)
     @DisplayName("Should publish TaskDeletedEvent to 'task-deleted' topic")
     void publishTaskDeleted_SendsEventToCorrectTopic() {
-        var event = new TaskDeletedEvent(UUID.randomUUID(),1L, "Um novo título");
+        var event = new TaskDeletedEvent(UUID.randomUUID(), 1L, "Um novo título");
 
         producer.publishTaskDeleted(event);
 
-        verify(kafkaTemplate).send("task-deleted", "1", event);
+        var record = captureProducerRecord();
+
+        assertEquals("task-deleted", record.topic());
+        assertEquals("1", record.key());
+        assertSame(event, record.value());
+    }
+
+    private ProducerRecord<String, Object> captureProducerRecord() {
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<ProducerRecord<String, Object>> captor =
+                ArgumentCaptor.forClass((Class) ProducerRecord.class);
+
+        verify(kafkaTemplate).send(captor.capture());
+        return captor.getValue();
     }
 }
