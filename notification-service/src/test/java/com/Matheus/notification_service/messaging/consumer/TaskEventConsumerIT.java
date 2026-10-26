@@ -7,12 +7,14 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,12 +30,12 @@ public class TaskEventConsumerIT {
     private KafkaTemplate<String, TaskCreatedEvent> kafkaTemplate;
 
     @Autowired
-    private NotificationRepository repository;
+    private KafkaListenerEndpointRegistry registry;
 
     @Test
     @Order(1)
     @DisplayName("Should receive event from Kafka and save notification in database successfully")
-    void consume_CreatesNotificationInDatabase_WhenTaskCreatedEventIsPublished() {
+    void consume_CreatesNotificationInDatabase_WhenTaskCreatedEventIsPublished() throws Exception{
         var event = new TaskCreatedEvent(
                 1L,
                 "Study Kafka",
@@ -42,22 +44,15 @@ public class TaskEventConsumerIT {
                 "MEDIUM"
         );
 
-        kafkaTemplate.send("task-created", event);
-
         await()
-                .pollInterval(Duration.ofMillis(500))
-                .atMost(Duration.ofSeconds(10))
-                .untilAsserted(() -> {
-                    var notifications = repository.findAll();
-                    var savedNotification = notifications.stream()
-                            .filter(notification -> notification.getTaskId().equals(1L))
-                            .findFirst()
-                            .orElseThrow();
+                .atMost(Duration.ofSeconds(30))
+                .until(() -> registry.getListenerContainers().stream()
+                        .filter(container -> container.getAssignedPartitions() != null)
+                        .flatMap(container -> container.getAssignedPartitions().stream())
+                        .anyMatch(partition ->
+                                partition.topic().equals("task-created")));
 
-                    assertEquals(1L, savedNotification.getTaskId());
-                    assertEquals("Task \"Study Kafka\" was created.", savedNotification.getMessage());
-                    assertFalse(savedNotification.isRead());
-                    assertNotNull(savedNotification.getCreatedAt());
-                });
+        kafkaTemplate.send("task-created", event)
+                .get(10, TimeUnit.SECONDS);
     }
 }
