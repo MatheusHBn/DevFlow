@@ -101,7 +101,13 @@ class JwtServiceTest {
     @DisplayName("Should throw JwtException when attempting to read a tampered token")
     void extractUsername_ThrowsJwtException_WhenTokenIsTampered() {
         String token = jwtService.generateToken(userDetails);
-        String tamperedToken = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
+        String[] parts = token.split("\\.");
+        String signature = parts[2];
+
+        char firstChar = signature.charAt(0);
+        char replacement = firstChar == 'A' ? 'B' : 'A';
+
+        String tamperedToken = parts[0] + "." + parts[1] + "." + replacement + signature.substring(1);
 
         assertThrows(JwtException.class, () -> jwtService.extractUsername(tamperedToken));
     }
