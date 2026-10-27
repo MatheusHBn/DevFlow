@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: notification-service
-          image: devflow-notification-service:latest
+          image: ghcr.io/matheushbn/devflow-notification-service:v2.10.0
           imagePullPolicy: IfNotPresent
 
           ports:

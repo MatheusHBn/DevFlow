@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: audit-service
-          image: devflow-audit-service:latest
+          image: ghcr.io/matheushbn/devflow-audit-service:v2.10.0
           imagePullPolicy: IfNotPresent
 
           ports:

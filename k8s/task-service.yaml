@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: task-service
-          image: devflow-task-service:latest
+          image: ghcr.io/matheushbn/devflow-task-service:v2.10.0
           imagePullPolicy: IfNotPresent
 
           ports:
