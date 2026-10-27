@@ -7,13 +7,12 @@ import com.Matheus.audit_service.messaging.event.TaskCreatedEvent;
 import com.Matheus.audit_service.repository.AuditLogRepository;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.utils.Java;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -21,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,11 +40,13 @@ public class TaskEventConsumerIT {
     @Autowired
     private KafkaAdmin kafkaAdmin;
 
+    @Autowired
+    private KafkaListenerEndpointRegistry registry;
 
     @Test
     @Order(1)
     @DisplayName("Should consume Kafka message and persist audit log in database")
-    void consume_CreatesAuditInDatabase_WhenTaskCreatedEventIsPublished() {
+    void consume_CreatesAuditInDatabase_WhenTaskCreatedEventIsPublished() throws Exception {
         Long expectedTaskId = 1L;
         String taskTitle = "Study Kafka";
 
@@ -56,7 +58,9 @@ public class TaskEventConsumerIT {
                 "PENDING",
                 "HIGH");
 
-        kafkaTemplate.send("task-created", event);
+        awaitTaskCreatedConsumer();
+
+        kafkaTemplate.send("task-created", event).get(10, TimeUnit.SECONDS);
 
         Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             var savedAudit = repository.findAll().stream()
@@ -76,7 +80,7 @@ public class TaskEventConsumerIT {
     @Test
     @Order(2)
     @DisplayName("Should create only one audit when same event is published twice")
-    void consume_CreatesOnlyOneAudit_WhenSameEventIsPublishedTwice() {
+    void consume_CreatesOnlyOneAudit_WhenSameEventIsPublishedTwice() throws Exception {
         var eventId = UUID.randomUUID();
 
         var event = new TaskCreatedEvent(
@@ -87,8 +91,10 @@ public class TaskEventConsumerIT {
                 "TODO",
                 "HIGH");
 
-        kafkaTemplate.send("task-created", event);
-        kafkaTemplate.send("task-created", event);
+        awaitTaskCreatedConsumer();
+
+        kafkaTemplate.send("task-created", event).get(10, TimeUnit.SECONDS);
+        kafkaTemplate.send("task-created", event).get(10, TimeUnit.SECONDS);
 
         Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             var audits = repository.findAll().stream()
@@ -110,28 +116,40 @@ public class TaskEventConsumerIT {
                 "TODO",
                 "HIGH");
 
-        var result = kafkaTemplate.send("task-created", event).get();
+        awaitTaskCreatedConsumer();
+
+        var result = kafkaTemplate.send("task-created", event).get(10, TimeUnit.SECONDS);
         var metadata = result.getRecordMetadata();
         var topicPartition = new TopicPartition(metadata.topic(), metadata.partition());
         var expectedOffset = metadata.offset() + 1;
 
         Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-                    var committedOffset = getCommittedOffset(topicPartition);
-                    assertEquals(expectedOffset, committedOffset);
-                });
+            var committedOffset = getCommittedOffset(topicPartition);
+            assertEquals(expectedOffset, committedOffset);
+        });
     }
 
-        private long getCommittedOffset(TopicPartition topicPartition) throws Exception {
+    private long getCommittedOffset(TopicPartition topicPartition) throws Exception {
 
-            try (var adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+        try (var adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
 
-                var offsets = adminClient.listConsumerGroupOffsets("audit-service")
-                        .partitionsToOffsetAndMetadata()
-                        .get();
+            var offsets = adminClient.listConsumerGroupOffsets("audit-service")
+                    .partitionsToOffsetAndMetadata()
+                    .get();
 
-                var metadata = offsets.get(topicPartition);
+            var metadata = offsets.get(topicPartition);
 
-                return metadata == null ? -1 : metadata.offset();
+            return metadata == null ? -1 : metadata.offset();
         }
+    }
+
+    private void awaitTaskCreatedConsumer() {
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(30))
+                .until(() -> registry.getListenerContainers().stream()
+                        .filter(container -> container.getAssignedPartitions() != null)
+                        .flatMap(container -> container.getAssignedPartitions().stream())
+                        .anyMatch(partition ->
+                                partition.topic().equals("task-created")));
     }
 }

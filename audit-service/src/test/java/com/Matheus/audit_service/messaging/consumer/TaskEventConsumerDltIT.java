@@ -56,7 +56,7 @@ public class TaskEventConsumerDltIT {
 
         var dltMessage = listener.messages.poll(10, TimeUnit.SECONDS);
 
-        assertThat(dltMessage).isNotNull().extracting(TaskCreatedEvent::title).isEqualTo("Fail Task");
+        assertThat(dltMessage).isNotNull().contains("Fail Task");
     }
 
     @Test
@@ -88,10 +88,10 @@ public class TaskEventConsumerDltIT {
 
     @TestConfiguration
     static class DltTestListener {
-        final BlockingQueue<TaskCreatedEvent> messages = new LinkedBlockingQueue<>();
+        final BlockingQueue<String> messages = new LinkedBlockingQueue<>();
 
         @KafkaListener(topics = "task-created.DLT", groupId = "dlt-test-group")
-        void listen(TaskCreatedEvent message) {
+        void listen(String message) {
             messages.add(message);
         }
     }
