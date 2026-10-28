@@ -81,13 +81,15 @@ kind: Service
 metadata:
   name: task-service
   namespace: devflow
+  labels:
+    monitoring: "enabled"
 
 spec:
   type: ClusterIP
-
   selector:
     app: task-service
-
   ports:
-    - port: 8081
+    - name: http
+      port: 8081
       targetPort: 8081
+      protocol: TCP
