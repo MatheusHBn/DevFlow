@@ -31,6 +31,25 @@ build/
 
 ### VS Code ###
 .vscode/
-/.env
 /docker/kafka-backup/
 /docker/kafka-exporter/jmx_prometheus_javaagent.jar
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Potentially sensitive variables
+*.tfvars
+*.tfvars.json
+
+# Secrets
+.env
+**/.env
+
+# Kafka Exporter
+**/jmx_prometheus_javaagent.jar
+
