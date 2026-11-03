@@ -28,3 +28,30 @@ jobs:
 
       - name: Verify Maven project
         run: mvn -B -ntp clean verify
+
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.16.6'
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive terraform
+
+      - name: Initialize and validate Dev
+        run: |
+          terraform -chdir=terraform/environments/dev init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=terraform/environments/dev validate
+
+      - name: Initialize and validate Prod
+        run: |
+          terraform -chdir=terraform/environments/prod init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=terraform/environments/prod validate
