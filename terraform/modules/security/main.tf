@@ -1,7 +1,7 @@
 resource "aws_security_group" "postgres" {
   name        = "devflow-lab-postgres"
   description = "Security Group do PostgresSQL do DevFlow"
-  vpc_id =       var.vpc_id
+  vpc_id      = var.vpc_id
 
   tags = {
     Name    = "devflow-lab-postgres"
