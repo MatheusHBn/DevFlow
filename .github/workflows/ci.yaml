@@ -55,3 +55,42 @@ jobs:
         run: |
           terraform -chdir=terraform/environments/prod init -backend=false -input=false -lockfile=readonly
           terraform -chdir=terraform/environments/prod validate
+
+  terraform-plan:
+    name: Terraform Plan AWS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+       github.event_name == 'workflow_dispatch')
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.16.6'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::174302433598:role/DevFlow-GitHub-Terraform-Plan
+          aws-region: sa-east-1
+          allowed-account-ids: '174302433598'
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Initialize Terraform
+        run: terraform -chdir=terraform/environments/dev init -input=false -lockfile=readonly
+
+      - name: Terraform Plan
+        run: terraform -chdir=terraform/environments/dev plan -input=false -lock-timeout=60s -no-color
