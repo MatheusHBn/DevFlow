@@ -1,0 +1,144 @@
+
+name: Kubernetes CD - Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "GHCR image tag"
+        required: true
+        type: string
+        default: "v3.1.0"
+
+permissions:
+  contents: read
+
+jobs:
+  kubernetes-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@v1.15.2
+        with:
+          cluster_name: devflow-ci
+          wait: 180s
+
+      - name: Create test namespace and secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubectl create namespace devflow
+
+          DB_PASS="$(openssl rand -hex 24)"
+          JWT_KEY="$(openssl rand -hex 32)"
+
+          kubectl -n devflow create secret generic postgres-credentials \
+            --from-literal=POSTGRES_USER=devflow_ci \
+            --from-literal=POSTGRES_PASSWORD="$DB_PASS"
+
+          kubectl -n devflow create secret generic devflow-app-env \
+            --from-literal=DB_USERNAME=devflow_ci \
+            --from-literal=DB_PASSWORD="$DB_PASS" \
+            --from-literal=JWT_SECRET="$JWT_KEY" \
+            --from-literal=JWT_EXPIRATION=3600000 \
+            --from-literal=SERVER_ADDRESS=0.0.0.0 \
+            --from-literal=SERVER_PORT=8080 \
+            --from-literal=TASK_DB_URL=jdbc:postgresql://postgres:5432/task_db \
+            --from-literal=NOTIFICATION_DB_URL=jdbc:postgresql://postgres:5432/notification_db \
+            --from-literal=AUDIT_DB_URL=jdbc:postgresql://postgres:5432/audit_db \
+            --from-literal=AUTH_DB_URL=jdbc:postgresql://postgres:5432/devflow_auth \
+            --from-literal=KAFKA_BOOTSTRAP_SERVERS=kafka:9092 \
+            --from-literal=TASK_SERVICE_URL=http://task-service:8081 \
+            --from-literal=NOTIFICATION_SERVICE_URL=http://notification-service:8082 \
+            --from-literal=AUDIT_SERVICE_URL=http://audit-service:8083 \
+            --from-literal=AUTH_SERVICE_URL=http://auth-service:8084
+
+      - name: Deploy PostgreSQL and Kafka
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubectl -n devflow create configmap postgres-init \
+            --from-file=init.sql=docker/postgres/init.sql
+
+          kubectl apply -f k8s/postgres.yaml
+          kubectl apply -f k8s/kafka.yaml
+
+          kubectl rollout status statefulset/postgres \
+            -n devflow --timeout=600s
+
+          kubectl rollout status statefulset/kafka \
+            -n devflow --timeout=600s
+
+      - name: Deploy microservices
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$IMAGE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid image tag: $IMAGE_TAG"
+            exit 1
+          fi
+
+          services=(
+            task-service
+            notification-service
+            audit-service
+            auth-service
+            api-gateway
+          )
+
+          for service in "${services[@]}"; do
+            sed -i -E \
+              "s#(ghcr.io/matheushbn/devflow-${service}:)[^[:space:]]+#\1${IMAGE_TAG}#" \
+              "k8s/${service}.yaml"
+
+            kubectl apply -f "k8s/${service}.yaml"
+          done
+
+          for service in "${services[@]}"; do
+            kubectl rollout status "deployment/$service" \
+              -n devflow --timeout=600s
+          done
+
+      - name: Smoke test API Gateway
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubectl -n devflow port-forward \
+            svc/api-gateway 18080:8080 \
+            > /tmp/devflow-port-forward.log 2>&1 &
+
+          PF_PID=$!
+          trap 'kill "$PF_PID" 2>/dev/null || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl -fsS \
+              http://127.0.0.1:18080/actuator/health/readiness \
+              | grep -q '"status":"UP"'; then
+              echo "API Gateway readiness: UP"
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          cat /tmp/devflow-port-forward.log
+          echo "API Gateway readiness check failed."
+          exit 1
+
+      - name: Show diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get pods -n devflow -o wide || true
+          kubectl get events -n devflow \
+            --sort-by=.lastTimestamp || true
