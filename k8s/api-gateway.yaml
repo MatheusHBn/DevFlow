@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: ghcr.io/matheushbn/devflow-api-gateway:v2.10.0
+          image: ghcr.io/matheushbn/devflow-api-gateway:v3.1.0
           imagePullPolicy: IfNotPresent
 
           ports:
