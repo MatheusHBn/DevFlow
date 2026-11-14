@@ -10,6 +10,12 @@ on:
         type: string
         default: "v3.1.0"
 
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+
 permissions:
   contents: read
 

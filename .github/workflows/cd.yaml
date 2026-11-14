@@ -73,3 +73,12 @@ jobs:
           context: ./${{ matrix.service }}
           push: true
           tags: ${{ steps.image.outputs.name }}:${{ github.event.release.tag_name }}
+
+  smoke-test:
+    name: Kubernetes Deployment Smoke Test
+    needs: [ verify, publish ]
+    uses: ./.github/workflows/k8s-smoke.yml
+    with:
+      image_tag: ${{ github.event.release.tag_name }}
+    permissions:
+      contents: read
